@@ -444,6 +444,48 @@
             font-size: 0.85rem;
         }
 
+
+        /* FLYERS ARCHIVE */
+        .flyers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: var(--grid-gap);
+            align-items: start;
+        }
+
+        .flyer-card {
+            display: block;
+            position: relative;
+            overflow: hidden;
+            background: var(--surface-color);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: var(--transition);
+        }
+
+        .flyer-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 51, 0, 0.45);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .flyer-card img {
+            display: block;
+            width: 100%;
+            height: auto;
+            transition: var(--transition);
+        }
+
+        .flyer-card:hover img {
+            transform: scale(1.02);
+        }
+
+        .flyers-status {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
         /* AUDIO PLAYER */
         .audio-player {
             position: fixed;
@@ -747,7 +789,8 @@
             }
 
             .music-grid,
-            .videos-grid {
+            .videos-grid,
+            .flyers-grid {
                 grid-template-columns: minmax(0, 1fr);
             }
 
@@ -967,6 +1010,15 @@
         </div>
     </section>
 
+
+    <!-- Flyers Archive -->
+    <section id="flyers">
+        <h2 class="section-title">Flyers <span>Archive</span></h2>
+        <div class="flyers-grid" id="flyers-grid">
+            <p class="flyers-status" id="flyers-status">Loading flyers...</p>
+        </div>
+    </section>
+
     <!-- Footer -->
     <footer id="contact">
         <div class="social-links">
@@ -1142,6 +1194,61 @@
             const top = musicSection.getBoundingClientRect().top + window.scrollY - navHeight - 20;
             window.scrollTo({ top, behavior: 'smooth' });
         });
+
+
+        /* ═══════════════════════════════════════
+           FLYERS ARCHIVE
+           Reads the automatically generated flyer list
+           from the separate content repository.
+           ═══════════════════════════════════════ */
+        const FLYERS_LIST_URL = 'https://OshemProject.github.io/content/flyers.json';
+        const FLYERS_BASE_URL = 'https://OshemProject.github.io/content/flyers/';
+
+        async function loadFlyers() {
+            const grid = document.getElementById('flyers-grid');
+            const status = document.getElementById('flyers-status');
+
+            try {
+                const response = await fetch(FLYERS_LIST_URL, { cache: 'no-store' });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const flyers = await response.json();
+
+                if (!Array.isArray(flyers) || flyers.length === 0) {
+                    status.textContent = 'No flyers uploaded yet.';
+                    return;
+                }
+
+                grid.innerHTML = '';
+
+                flyers.forEach((filename) => {
+                    const imageUrl = FLYERS_BASE_URL + encodeURIComponent(filename);
+
+                    const link = document.createElement('a');
+                    link.className = 'flyer-card';
+                    link.href = imageUrl;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+
+                    const img = document.createElement('img');
+                    img.src = imageUrl;
+                    img.alt = filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+                    img.loading = 'lazy';
+
+                    link.appendChild(img);
+                    grid.appendChild(link);
+                });
+
+            } catch (error) {
+                console.error('Could not load Flyers Archive:', error);
+                status.textContent = 'Flyers archive is temporarily unavailable.';
+            }
+        }
+
+        loadFlyers();
 
         /* ═══════════════════════════════════════
            PLAYLIST — EDIT THESE SRC URLs
